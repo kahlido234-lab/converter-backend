@@ -27,37 +27,30 @@ app.get("/", (req, res) => {
 
 // Convert route
 app.post("/convert", upload.single("file"), (req, res) => {
-  try {
-    // 🚨 VERY IMPORTANT CHECK
-    if (!req.file) {
-      return res.status(400).send("No file uploaded");
-    }
-
-    const inputPath = req.file.path;
-    const outputPath = `${inputPath}.mp3`;
-
-    ffmpeg(inputPath)
-      .toFormat("mp3")
-      .on("end", () => {
-        res.download(outputPath, "converted.mp3", () => {
-          try {
-            if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-            if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-          } catch (e) {
-            console.log("cleanup error:", e);
-          }
-        });
-      })
-      .on("error", (err) => {
-        console.error("FFmpeg error:", err);
-        res.status(500).send("Conversion failed");
-      })
-      .save(outputPath);
-
-  } catch (error) {
-    console.error("Server error:", error);
-    res.status(500).send("Server error");
+  if (!req.file) {
+    return res.status(400).send("No file uploaded");
   }
+
+  const inputPath = req.file.path;
+  const outputPath = `${inputPath}.mp3`;
+
+  ffmpeg(inputPath)
+    .toFormat("mp3")
+    .on("end", () => {
+      res.download(outputPath, "converted.mp3", () => {
+        try {
+          if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+          if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+        } catch (e) {
+          console.log("Cleanup error:", e);
+        }
+      });
+    })
+    .on("error", (err) => {
+      console.error("FFmpeg error:", err);
+      res.status(500).send("Conversion failed");
+    })
+    .save(outputPath);
 });
 
 // IMPORTANT: Use Railway port
